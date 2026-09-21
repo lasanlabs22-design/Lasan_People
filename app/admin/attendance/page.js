@@ -1,0 +1,112 @@
+import Link from "next/link";
+import { ChevronLeft, ChevronRight, Clock3, MapPin, UserCheck, UserX, CalendarOff } from "lucide-react";
+import { load } from "@/lib/api";
+import { addDays, isIsoDate, todayIso } from "@/lib/dates";
+import { fmtDate, fmtDuration, fmtTime } from "@/lib/format";
+import { Avatar, Badge, Card, EmptyState, PageHeader, StatCard, Table, Td, Th } from "@/components/ui";
+import { DateJump } from "@/components/date-jump";
+
+export const metadata = { title: "Attendance" };
+
+export default async function AttendancePage({ searchParams }) {
+  const sp = await searchParams;
+  const today = todayIso();
+  const date = isIsoDate(sp.date) ? sp.date : today;
+  const { summary, rows } = await load("/admin/attendance", { query: { date } });
+
+  return (
+    <>
+      <PageHeader
+        eyebrow="Roll-call"
+        title="Attendance"
+        description={fmtDate(date, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+        actions={
+          <div className="flex items-center gap-1 rounded-xl border border-white/[0.06] bg-white/[0.02] p-1">
+            <Link href={`?date=${addDays(date, -1)}`} className="rounded-lg p-2 text-muted hover:bg-white/10 hover:text-fg" aria-label="Previous day">
+              <ChevronLeft className="size-4" />
+            </Link>
+            <DateJump key={date} value={date} max={today} />
+            {date < today && (
+              <Link href={`?date=${addDays(date, 1)}`} className="rounded-lg p-2 text-muted hover:bg-white/10 hover:text-fg" aria-label="Next day">
+                <ChevronRight className="size-4" />
+              </Link>
+            )}
+            {date !== today && (
+              <Link href="/admin/attendance" className="rounded-lg px-3 py-1.5 text-xs text-brand-300 hover:bg-white/10">
+                Today
+              </Link>
+            )}
+          </div>
+        }
+      />
+
+      <div className="mb-6 grid gap-4 sm:grid-cols-3">
+        <StatCard label="Present" value={summary.present} hint={`of ${summary.total}`} icon={UserCheck} accent="emerald" />
+        <StatCard label="On leave" value={summary.onLeave} icon={CalendarOff} accent="cyan" />
+        <StatCard label="Not checked in" value={summary.absent} icon={UserX} accent="rose" />
+      </div>
+
+      <Card>
+        {rows.length === 0 ? (
+          <EmptyState icon={Clock3} title="No active employees" />
+        ) : (
+          <Table>
+            <thead className="border-b border-white/[0.06]">
+              <tr>
+                <Th>Employee</Th>
+                <Th>Status</Th>
+                <Th>In</Th>
+                <Th>Out</Th>
+                <Th className="hidden sm:table-cell">Worked</Th>
+                <Th className="hidden md:table-cell">Location</Th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/[0.04]">
+              {rows.map((r) => (
+                <tr key={r.id} className="hover:bg-white/[0.02]">
+                  <Td>
+                    <Link href={`/admin/employees/${r.id}?tab=attendance`} className="flex items-center gap-3 hover:text-brand-300">
+                      <Avatar name={r.name} size={32} />
+                      <span className="min-w-0">
+                        <span className="block truncate font-medium">{r.name}</span>
+                        <span className="block font-mono text-xs text-muted">{r.employeeCode}</span>
+                      </span>
+                    </Link>
+                  </Td>
+                  <Td>
+                    {r.record ? (
+                      <Badge tone="emerald" dot>
+                        Present
+                      </Badge>
+                    ) : r.leave ? (
+                      <span className="rounded-full px-2.5 py-0.5 text-[11px] font-medium" style={{ background: `${r.leave.color}22`, color: r.leave.color }}>
+                        {r.leave.type}
+                      </span>
+                    ) : (
+                      <Badge tone="slate">Not in</Badge>
+                    )}
+                  </Td>
+                  <Td className="tabular-nums">{fmtTime(r.record?.checkInAt)}</Td>
+                  <Td className="tabular-nums">{fmtTime(r.record?.checkOutAt)}</Td>
+                  <Td className="hidden tabular-nums text-muted sm:table-cell">{fmtDuration(r.record?.checkInAt, r.record?.checkOutAt)}</Td>
+                  <Td className="hidden md:table-cell">
+                    {r.record &&
+                      (r.record.source === "geo" ? (
+                        <span className="inline-flex items-center gap-1.5 text-xs text-emerald-300">
+                          <MapPin className="size-3.5" /> In office · {r.record.checkInDistance} m
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 text-xs text-amber-300">
+                          <MapPin className="size-3.5" /> Remote{r.record.checkInDistance != null && ` · ${r.record.checkInDistance} m away`}
+                        </span>
+                      ))}
+                  </Td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        )}
+      </Card>
+    </>
+  );
+}
