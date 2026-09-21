@@ -3,6 +3,7 @@ import { load } from "@/lib/api";
 import { Logo } from "@/components/brand";
 import { Card } from "@/components/ui";
 import { ChangePasswordForm } from "@/components/change-password-form";
+import { PoweredBy } from "@/components/powered-by";
 
 export const metadata = { title: "Set your password" };
 
@@ -10,8 +11,8 @@ export default async function ChangePasswordPage() {
   const { user } = await load("/auth/me");
   const first = user.mustChangePassword;
   return (
-    <main className="flex min-h-dvh items-center justify-center px-5 py-12">
-      <div className="w-full max-w-md animate-fade-up">
+    <main className="flex min-h-dvh flex-col px-5">
+      <div className="m-auto w-full max-w-md animate-fade-up py-12">
         <Logo className="mb-8" />
         <Card className="p-7">
           <span className="mb-5 grid size-11 place-items-center rounded-xl border border-brand-500/30 bg-brand-500/10 text-brand-300">
@@ -33,6 +34,7 @@ export default async function ChangePasswordPage() {
           </a>
         )}
       </div>
+      <PoweredBy />
     </main>
   );
 }

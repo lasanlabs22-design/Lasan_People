@@ -17,6 +17,7 @@ import {
   X,
 } from "lucide-react";
 import { Logo } from "./brand";
+import { PoweredBy } from "./powered-by";
 import { Avatar, cn } from "./ui";
 
 const NAV = {
@@ -97,7 +98,7 @@ export function Shell({ user, badges = {}, children }) {
   );
 
   return (
-    <div className="min-h-dvh lg:pl-64">
+    <div className="flex min-h-dvh flex-col lg:pl-64">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-white/[0.06] bg-ink-950/60 p-4 backdrop-blur-xl lg:flex">
         <Link href={items[0].href} className="mb-8 px-2 pt-2">
           <Logo />
@@ -129,7 +130,42 @@ export function Shell({ user, badges = {}, children }) {
         </div>
       )}
 
-      <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-10 lg:py-10">{children}</main>
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 pt-6 pb-4 sm:px-6 sm:pt-8 lg:px-10 lg:pt-10">{children}</main>
+      <PoweredBy className={cn(user.role !== "admin" && "pb-24 lg:pb-6")} />
+
+      {user.role !== "admin" && <BottomNav items={items} pathname={pathname} />}
     </div>
+  );
+}
+
+/** Thumb-reachable tab bar for employees on phones (they mostly check in from mobile). */
+function BottomNav({ items, pathname }) {
+  return (
+    <nav
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-white/[0.08] bg-ink-950/85 backdrop-blur-xl lg:hidden"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+    >
+      <ul className="mx-auto grid max-w-lg grid-cols-5">
+        {items.map(({ href, label, icon: Icon, exact }) => {
+          const active = exact ? pathname === href : pathname === href || pathname.startsWith(href + "/");
+          return (
+            <li key={href}>
+              <Link
+                href={href}
+                className={cn(
+                  "flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium transition-colors",
+                  active ? "text-brand-300" : "text-subtle hover:text-muted",
+                )}
+              >
+                <span className={cn("grid h-7 w-12 place-items-center rounded-full transition-colors", active && "bg-brand-500/15")}>
+                  <Icon className="size-[18px]" />
+                </span>
+                {label === "My leaves" ? "Leaves" : label}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
   );
 }

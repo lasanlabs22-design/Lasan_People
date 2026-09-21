@@ -29,7 +29,7 @@ export default async function MyAttendance({ searchParams }) {
   return (
     <>
       <PageHeader eyebrow="History" title="My attendance" description="Every check-in and check-out you've made." />
-      <div className="mb-6 grid gap-4 sm:grid-cols-3">
+      <div className="mb-6 grid grid-cols-3 gap-3 sm:gap-4">
         <StatCard label="Days present" value={records.length} icon={CalendarCheck2} accent="emerald" />
         <StatCard label="Avg. day" value={complete.length ? `${Math.floor(avgMins / 60)}h ${String(Math.round(avgMins % 60)).padStart(2, "0")}m` : "—"} icon={Timer} accent="brand" />
         <StatCard label="Total hours" value={`${Math.round(totalMins / 60)}h`} icon={Clock3} accent="cyan" />

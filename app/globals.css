@@ -161,6 +161,20 @@ body {
   }
 }
 
+/* Grid/flex children default to min-width:auto, so one long line can push the page wider
+   than a phone screen (and mobile browsers then zoom the whole page out). */
+.grid > *,
+main {
+  min-width: 0;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 ::selection {
   background: rgb(124 92 255 / 0.4);
 }

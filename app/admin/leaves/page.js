@@ -22,13 +22,13 @@ export default async function LeavesPage({ searchParams }) {
     <>
       <PageHeader eyebrow="Time off" title="Leave requests" description="Approve with an optional note, or reject with a reason the employee will see." />
 
-      <nav className="mb-6 flex gap-1 overflow-x-auto rounded-xl border border-white/[0.06] bg-white/[0.02] p-1 sm:w-fit">
+      <nav className="no-scrollbar mb-6 flex gap-1 overflow-x-auto rounded-xl border border-white/[0.06] bg-white/[0.02] p-1 sm:w-fit">
         {TABS.map((t) => (
           <Link
             key={t}
             href={`/admin/leaves?status=${t}`}
             className={cn(
-              "inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm capitalize transition-colors",
+              "inline-flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm capitalize transition-colors sm:px-4",
               status === t ? "bg-white/10 text-fg" : "text-muted hover:text-fg",
             )}
           >

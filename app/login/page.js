@@ -1,6 +1,7 @@
 import { CalendarCheck2, MapPinned, ShieldCheck, Sparkles } from "lucide-react";
 import { Logo } from "@/components/brand";
 import { Alert } from "@/components/ui";
+import { PoweredBy } from "@/components/powered-by";
 import { LoginForm } from "./login-form";
 
 export const metadata = { title: "Sign in" };
@@ -47,8 +48,8 @@ export default async function LoginPage({ searchParams }) {
         <p className="relative text-xs text-subtle">© {new Date().getFullYear()} Lasan. All rights reserved.</p>
       </section>
 
-      <section className="flex items-center justify-center px-5 py-12">
-        <div className="w-full max-w-sm animate-fade-up">
+      <section className="flex flex-col px-5">
+        <div className="m-auto w-full max-w-sm animate-fade-up py-12">
           <Logo className="mb-10 lg:hidden" />
           <h2 className="font-display text-3xl font-semibold tracking-tight">Welcome back</h2>
           <p className="mt-2 text-sm text-muted">Sign in with the employee ID or email your admin shared with you.</p>
@@ -57,6 +58,7 @@ export default async function LoginPage({ searchParams }) {
           )}
           <LoginForm next={typeof next === "string" ? next : ""} />
         </div>
+        <PoweredBy />
       </section>
     </main>
   );

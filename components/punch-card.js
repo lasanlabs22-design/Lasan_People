@@ -54,7 +54,7 @@ export function PunchCard({ today }) {
   const worked = record ? fmtDuration(record.checkInAt, record.checkOutAt ?? now ?? record.checkInAt) : null;
 
   return (
-    <Card className="relative overflow-hidden p-6">
+    <Card className="relative overflow-hidden p-5 sm:p-6">
       <Radar active={state !== "done"} />
       <div className="relative flex h-full flex-col">
         <div className="flex items-start justify-between">
@@ -65,11 +65,11 @@ export function PunchCard({ today }) {
           <GeoStatus mode={geofenceMode} offices={offices} near={near} inside={inside} />
         </div>
 
-        <p className="mt-6 font-display text-5xl font-semibold tabular-nums tracking-tight" suppressHydrationWarning>
+        <p className="mt-5 font-display text-4xl font-semibold tabular-nums tracking-tight sm:mt-6 sm:text-5xl" suppressHydrationWarning>
           {clock ?? "--:--:--"}
         </p>
 
-        <div className="mt-6 grid grid-cols-3 gap-3 text-center">
+        <div className="mt-5 grid grid-cols-3 gap-2 text-center sm:mt-6 sm:gap-3">
           <Stat label="Check in" value={fmtTime(record?.checkInAt)} />
           <Stat label="Check out" value={fmtTime(record?.checkOutAt)} />
           <Stat label="Worked" value={worked ?? "—"} highlight={state === "out"} />

@@ -47,7 +47,7 @@ export default async function EmployeeDashboard({ searchParams }) {
         <PunchCard today={today} />
 
         <div className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
             {balances.map((b) => (
               <BalanceCard key={b.leaveTypeId} balance={b} />
             ))}

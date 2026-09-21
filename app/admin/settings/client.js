@@ -79,9 +79,9 @@ export function LeavePolicy({ leaveTypes }) {
 function LeaveTypeRow({ type }) {
   const [state, onSubmit, pending] = useFormAction(saveLeaveType.bind(null, type.id));
   return (
-    <form onSubmit={onSubmit} className="flex flex-wrap items-center gap-3 px-3 py-3">
-      <input type="color" name="color" defaultValue={type.color} className="size-8 cursor-pointer rounded-lg border border-white/10 bg-transparent p-0.5" aria-label="Colour" />
-      <div className="min-w-0 flex-1">
+    <form onSubmit={onSubmit} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-3">
+      <input type="color" name="color" defaultValue={type.color} className="size-8 shrink-0 cursor-pointer rounded-lg border border-white/10 bg-transparent p-0.5" aria-label="Colour" />
+      <div className="min-w-0 flex-1 basis-40">
         <input name="name" defaultValue={type.name} className="w-full bg-transparent text-sm font-medium outline-none focus:text-brand-50" aria-label="Name" />
         <p className="text-xs text-muted">
           {type.eligibleGender !== "any" && <span className="capitalize">{type.eligibleGender} only · </span>}
@@ -89,16 +89,18 @@ function LeaveTypeRow({ type }) {
           {!type.allowHalfDay && " · No half days"}
         </p>
       </div>
-      <label className="flex items-center gap-2 text-xs text-muted">
-        <input name="annualQuota" type="number" step="0.5" min="0" max="366" defaultValue={type.annualQuota} className="field h-9 w-20 py-1 text-right tabular-nums" aria-label="Annual quota" />
-        days
-      </label>
-      <label className="flex items-center gap-1.5 text-xs text-muted">
-        <input type="checkbox" name="isActive" defaultChecked={type.isActive} className="size-4 accent-brand-500" /> Active
-      </label>
-      <SubmitButton pending={pending} size="sm" variant="secondary">
-        Save
-      </SubmitButton>
+      <div className="ml-auto flex items-center gap-3">
+        <label className="flex items-center gap-2 text-xs text-muted">
+          <input name="annualQuota" type="number" step="0.5" min="0" max="366" defaultValue={type.annualQuota} className="field h-9 w-20 py-1 text-right tabular-nums" aria-label="Annual quota" />
+          days
+        </label>
+        <label className="flex items-center gap-1.5 text-xs text-muted">
+          <input type="checkbox" name="isActive" defaultChecked={type.isActive} className="size-4 accent-brand-500" /> Active
+        </label>
+        <SubmitButton pending={pending} size="sm" variant="secondary">
+          Save
+        </SubmitButton>
+      </div>
       {state?.error && <p className="w-full text-xs text-rose-300">{state.error}</p>}
       {state?.ok && !pending && <p className="w-full text-xs text-emerald-300">Saved</p>}
     </form>

@@ -18,14 +18,19 @@ export function MonthCalendar({ month, holidays = {}, events = {}, weekendDays =
 
   return (
     <div>
-      <div className="grid grid-cols-7 gap-1.5 pb-2">
+      <div className={cn("grid grid-cols-7 pb-2", compact ? "gap-1" : "gap-1 sm:gap-1.5")}>
         {WEEKDAYS.map((d) => (
           <div key={d} className={cn("text-center text-[10px] font-medium uppercase tracking-wider", d === "Sun" ? "text-rose-400" : "text-subtle")}>
-            {compact ? d[0] : d}
+            {compact ? d[0] : (
+              <>
+                <span className="sm:hidden">{d[0]}</span>
+                <span className="hidden sm:inline">{d}</span>
+              </>
+            )}
           </div>
         ))}
       </div>
-      <div className="grid grid-cols-7 gap-1.5">
+      <div className={cn("grid grid-cols-7", compact ? "gap-1" : "gap-1 sm:gap-1.5")}>
         {cells.map((iso, i) => {
           if (!iso) return <div key={`b${i}`} />;
           const holiday = holidays[iso];
@@ -41,8 +46,10 @@ export function MonthCalendar({ month, holidays = {}, events = {}, weekendDays =
               onClick={onSelect ? () => onSelect(iso) : undefined}
               title={[holiday?.name, ...dayEvents.map((e) => e.label)].filter(Boolean).join(" · ") || undefined}
               className={cn(
-                "group relative flex flex-col rounded-xl border text-left transition-all",
-                compact ? "aspect-square items-center justify-center p-0.5" : "min-h-20 p-2 sm:min-h-24",
+                "group relative flex flex-col border text-left transition-all",
+                compact
+                  ? "aspect-square items-center justify-center rounded-lg p-0.5"
+                  : "min-h-14 items-center rounded-lg p-1 sm:min-h-24 sm:items-stretch sm:rounded-xl sm:p-2",
                 holiday
                   ? "border-cyan-400/25 bg-cyan-400/[0.07]"
                   : sunday
@@ -56,8 +63,8 @@ export function MonthCalendar({ month, holidays = {}, events = {}, weekendDays =
             >
               <span
                 className={cn(
-                  "grid place-items-center rounded-full text-xs tabular-nums",
-                  compact ? "size-6" : "size-6",
+                  "grid shrink-0 place-items-center rounded-full tabular-nums",
+                  compact ? "size-5 text-[10px] sm:size-6 sm:text-xs" : "size-6 text-xs",
                   isToday
                     ? "bg-brand-500 font-semibold text-white shadow-glow"
                     : sunday
@@ -79,7 +86,21 @@ export function MonthCalendar({ month, holidays = {}, events = {}, weekendDays =
                   </span>
                 )
               ) : (
-                <span className="mt-1 flex min-w-0 flex-col gap-1">
+                <>
+                {/* Phones: colour bars only — labels are unreadable at this width (full text is in the title/tap). */}
+                {(holiday || dayEvents.length > 0) && (
+                  <span className="mt-1 flex w-full flex-col gap-0.5 px-0.5 sm:hidden">
+                    {holiday && <span className="h-1 rounded-full bg-cyan-300" />}
+                    {dayEvents.slice(0, 2).map((e, j) => (
+                      <span
+                        key={j}
+                        className={cn("h-1 rounded-full", e.dashed && "border border-dashed bg-transparent")}
+                        style={{ background: e.dashed ? undefined : e.color, borderColor: e.color }}
+                      />
+                    ))}
+                  </span>
+                )}
+                <span className="mt-1 hidden min-w-0 flex-col gap-1 sm:flex">
                   {holiday && (
                     <span className="truncate rounded-md bg-cyan-400/15 px-1.5 py-0.5 text-[10px] font-medium text-cyan-200">
                       {holiday.name}
@@ -97,6 +118,7 @@ export function MonthCalendar({ month, holidays = {}, events = {}, weekendDays =
                   ))}
                   {dayEvents.length > 2 && <span className="text-[10px] text-subtle">+{dayEvents.length - 2} more</span>}
                 </span>
+                </>
               )}
             </Tag>
           );
@@ -141,7 +163,7 @@ export function Legend({ items }) {
 /** Twelve compact months for a year-at-a-glance view. */
 export function YearCalendar({ year, holidays, events, weekendDays }) {
   return (
-    <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="grid grid-cols-2 gap-x-4 gap-y-6 xl:grid-cols-3">
       {Array.from({ length: 12 }, (_, i) => {
         const month = `${year}-${String(i + 1).padStart(2, "0")}`;
         return (

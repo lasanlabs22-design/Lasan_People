@@ -77,17 +77,18 @@ export default async function EmployeeDetail({ params, searchParams }) {
         </div>
       </Card>
 
-      <nav className="mt-6 flex gap-1 overflow-x-auto rounded-xl border border-white/[0.06] bg-white/[0.02] p-1">
+      <nav className="no-scrollbar mt-6 flex gap-1 overflow-x-auto rounded-xl border border-white/[0.06] bg-white/[0.02] p-1">
         {TABS.map(([t, label, Icon]) => (
           <Link
             key={t}
             href={`${base}?tab=${t}`}
+            aria-label={label}
             className={cn(
-              "inline-flex items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm transition-colors",
+              "inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm transition-colors sm:px-4",
               tab === t ? "bg-white/10 text-fg" : "text-muted hover:text-fg",
             )}
           >
-            <Icon className="size-4" /> {label}
+            <Icon className="size-4" /> <span className={cn(tab !== t && "hidden sm:inline")}>{label}</span>
           </Link>
         ))}
       </nav>
@@ -119,7 +120,7 @@ async function LeavesTab({ id, employee, balances, year, base }) {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         {balances.map((b) => (
           <BalanceCard
             key={b.leaveTypeId}

@@ -40,7 +40,7 @@ export default async function AttendancePage({ searchParams }) {
         }
       />
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-3">
+      <div className="mb-6 grid grid-cols-3 gap-3 sm:gap-4">
         <StatCard label="Present" value={summary.present} hint={`of ${summary.total}`} icon={UserCheck} accent="emerald" />
         <StatCard label="On leave" value={summary.onLeave} icon={CalendarOff} accent="cyan" />
         <StatCard label="Not checked in" value={summary.absent} icon={UserX} accent="rose" />
@@ -50,7 +50,46 @@ export default async function AttendancePage({ searchParams }) {
         {rows.length === 0 ? (
           <EmptyState icon={Clock3} title="No active employees" />
         ) : (
-          <Table>
+          <>
+          {/* Phones: one card per person instead of a 6-column table. */}
+          <ul className="divide-y divide-white/[0.05] sm:hidden">
+            {rows.map((r) => (
+              <li key={r.id}>
+                <Link href={`/admin/employees/${r.id}?tab=attendance`} className="flex items-center gap-3 px-4 py-3.5 active:bg-white/[0.03]">
+                  <Avatar name={r.name} size={36} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{r.name}</p>
+                    <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-muted">
+                      {r.record ? (
+                        <>
+                          <span className="tabular-nums">
+                            {fmtTime(r.record.checkInAt)} → {fmtTime(r.record.checkOutAt)}
+                          </span>
+                          <span className={r.record.source === "geo" ? "text-emerald-300" : "text-amber-300"}>
+                            {r.record.source === "geo" ? "In office" : "Remote"}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="font-mono">{r.employeeCode}</span>
+                      )}
+                    </p>
+                  </div>
+                  {r.record ? (
+                    <Badge tone="emerald" dot>
+                      {r.record.checkOutAt ? fmtDuration(r.record.checkInAt, r.record.checkOutAt) : "In"}
+                    </Badge>
+                  ) : r.leave ? (
+                    <span className="rounded-full px-2.5 py-0.5 text-[11px] font-medium" style={{ background: `${r.leave.color}22`, color: r.leave.color }}>
+                      {r.leave.type}
+                    </span>
+                  ) : (
+                    <Badge tone="slate">Not in</Badge>
+                  )}
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <Table className="hidden sm:block">
             <thead className="border-b border-white/[0.06]">
               <tr>
                 <Th>Employee</Th>
@@ -105,6 +144,7 @@ export default async function AttendancePage({ searchParams }) {
               ))}
             </tbody>
           </Table>
+          </>
         )}
       </Card>
     </>
