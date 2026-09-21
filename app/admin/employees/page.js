@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ChevronRight, Search, Users } from "lucide-react";
 import { load } from "@/lib/api";
 import { fmtDate, STATUS_TONE } from "@/lib/format";
-import { Avatar, Badge, Card, EmptyState, PageHeader, Stars, Table, Td, Th, cn } from "@/components/ui";
+import { Avatar, Badge, Card, EmptyState, PageHeader, Stars, Table, Th, cn } from "@/components/ui";
 import { AddEmployee } from "./add-employee";
 
 export const metadata = { title: "Employees" };
@@ -65,26 +65,30 @@ export default async function EmployeesPage({ searchParams }) {
             </thead>
             <tbody className="divide-y divide-white/[0.04]">
               {employees.map((e) => (
-                <tr key={e.id} className="group relative transition-colors hover:bg-white/[0.025]">
-                  <Td>
-                    <Link href={`/admin/employees/${e.id}`} className="flex items-center gap-3 after:absolute after:inset-0">
+                // Every cell holds its own link to this employee. (An ::after overlay stretched from one
+                // cell isn't reliably bounded by <tr>, so the last row's overlay would catch every click.)
+                <tr key={e.id} className="group transition-colors hover:bg-white/[0.025]">
+                  <RowCell href={`/admin/employees/${e.id}`} label={`Open ${e.name}`} primary>
+                    <span className="flex items-center gap-3">
                       <Avatar src={e.avatar} name={e.name} size={38} />
-                      <div className="min-w-0">
-                        <p className="truncate font-medium">
+                      <span className="min-w-0">
+                        <span className="block truncate font-medium">
                           {e.name} {e.role === "admin" && <Badge tone="brand" className="ml-1">Admin</Badge>}
-                        </p>
-                        <p className="truncate text-xs text-muted">
+                        </span>
+                        <span className="block truncate text-xs text-muted">
                           <span className="font-mono">{e.employeeCode}</span> · {e.email}
-                        </p>
-                      </div>
-                    </Link>
-                  </Td>
-                  <Td className="hidden md:table-cell">
-                    <p className="text-sm">{e.designation || "—"}</p>
-                    <p className="text-xs text-muted">{e.department || ""}</p>
-                  </Td>
-                  <Td className="hidden text-muted lg:table-cell">{fmtDate(e.dateOfJoining)}</Td>
-                  <Td className="hidden sm:table-cell">
+                        </span>
+                      </span>
+                    </span>
+                  </RowCell>
+                  <RowCell href={`/admin/employees/${e.id}`} className="hidden md:table-cell">
+                    <span className="block text-sm">{e.designation || "—"}</span>
+                    <span className="block text-xs text-muted">{e.department || ""}</span>
+                  </RowCell>
+                  <RowCell href={`/admin/employees/${e.id}`} className="hidden text-muted lg:table-cell">
+                    {fmtDate(e.dateOfJoining)}
+                  </RowCell>
+                  <RowCell href={`/admin/employees/${e.id}`} className="hidden sm:table-cell">
                     {e.rating ? (
                       <span className="inline-flex items-center gap-2">
                         <Stars value={e.rating} size={13} />
@@ -93,15 +97,15 @@ export default async function EmployeesPage({ searchParams }) {
                     ) : (
                       <span className="text-xs text-subtle">Not rated</span>
                     )}
-                  </Td>
-                  <Td>
+                  </RowCell>
+                  <RowCell href={`/admin/employees/${e.id}`}>
                     <Badge tone={STATUS_TONE[e.status]} dot>
                       {e.status}
                     </Badge>
-                  </Td>
-                  <Td className="w-8 text-subtle">
+                  </RowCell>
+                  <RowCell href={`/admin/employees/${e.id}`} className="w-8 text-subtle">
                     <ChevronRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-                  </Td>
+                  </RowCell>
                 </tr>
               ))}
             </tbody>
@@ -109,5 +113,22 @@ export default async function EmployeesPage({ searchParams }) {
         )}
       </Card>
     </>
+  );
+}
+
+/** Table cell whose whole area is a link; only the primary cell is announced to screen readers. */
+function RowCell({ href, label, primary, className, children }) {
+  return (
+    <td className={cn("p-0 align-middle", className)}>
+      <Link
+        href={href}
+        aria-label={primary ? label : undefined}
+        aria-hidden={primary ? undefined : true}
+        tabIndex={primary ? undefined : -1}
+        className="block px-5 py-3.5"
+      >
+        {children}
+      </Link>
+    </td>
   );
 }
