@@ -62,7 +62,7 @@ employeeRoutes.get(
 );
 
 const employeeSchema = z.object({
-  employeeCode: z.string().trim().regex(/^[A-Za-z0-9_-]{2,32}$/, "2–32 letters, numbers, - or _"),
+  employeeCode: z.string().trim().regex(/^[A-Za-z0-9_-]{2,32}$/, "2–32 letters, numbers, - or _").toUpperCase(),
   name: z.string().trim().min(2, "Enter the full name").max(120),
   email: z.email("Enter a valid email").trim().toLowerCase(),
   gender: z.enum(["male", "female", "other"], "Select a gender"),
