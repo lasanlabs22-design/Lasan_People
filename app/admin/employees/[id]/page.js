@@ -2,8 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarRange, Clock3, HeartPulse, Mail, Phone, Star, UserRound } from "lucide-react";
 import { load, ApiError } from "@/lib/api";
-import { fmtDate, fmtDays, fmtDuration, fmtRange, fmtTime, HALF_DAY_LABEL, STATUS_TONE } from "@/lib/format";
-import { isMonth, isYear, leavesByDate, todayIso } from "@/lib/dates";
+import { fmtDate, fmtDays, fmtDuration, fmtRange, fmtTime, HALF_DAY_LABEL, punchLabel, STATUS_TONE } from "@/lib/format";
+import { isMonth, isYear, leavesByDate, missedCheckOut, todayIso } from "@/lib/dates";
+import { MissedCheckOut } from "@/components/missed-check-out";
 import { deleteRating } from "@/app/actions/admin";
 import { Avatar, Badge, Card, CardHeader, EmptyState, Stars, cn } from "@/components/ui";
 import { ActionButton } from "@/components/client";
@@ -229,10 +230,11 @@ async function AttendanceTab({ id, month, base }) {
     load("/holidays", { query: { year: month.slice(0, 4) } }),
     load("/config"),
   ]);
+  const today = todayIso();
   const events = Object.fromEntries(
     records.map((r) => [
       r.date,
-      [{ label: `${fmtTime(r.checkInAt)}${r.checkOutAt ? `–${fmtTime(r.checkOutAt)}` : ""}`, color: r.source === "geo" ? "#34d399" : "#fbbf24" }],
+      [{ label: punchLabel(r, today), color: r.source === "geo" ? "#34d399" : "#fbbf24" }],
     ]),
   );
   return (
@@ -260,7 +262,7 @@ async function AttendanceTab({ id, month, base }) {
             <div key={r.id} className="flex items-center justify-between px-5 py-3 text-sm">
               <span>{fmtDate(r.date, { weekday: "short", day: "numeric", month: "short" })}</span>
               <span className="tabular-nums text-muted">
-                {fmtTime(r.checkInAt)} → {fmtTime(r.checkOutAt)}
+                {fmtTime(r.checkInAt)} → {missedCheckOut(r, today) ? <MissedCheckOut record={r} editable /> : fmtTime(r.checkOutAt)}
               </span>
               <span className="w-16 text-right tabular-nums text-xs text-subtle">{fmtDuration(r.checkInAt, r.checkOutAt)}</span>
             </div>

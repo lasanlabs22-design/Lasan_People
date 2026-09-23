@@ -99,6 +99,12 @@ export async function rejectLeave(id, _prev, fd) {
   return run(() => api(`/admin/leaves/${id}/reject`, { method: "POST", body: { reason: str(fd, "reason") } }), "/admin/leaves");
 }
 
+/* ------------------------------ Attendance ------------------------------ */
+
+export async function setCheckOut(recordId, _prev, fd) {
+  return run(() => api(`/admin/attendance/${recordId}/check-out`, { method: "POST", body: { time: str(fd, "time") } }), "/admin/attendance");
+}
+
 /* ------------------------------- Holidays ------------------------------- */
 
 export async function saveHoliday(id, _prev, fd) {

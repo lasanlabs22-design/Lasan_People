@@ -3,9 +3,11 @@ import { z } from "zod";
 import { and, asc, eq, gte, isNull, lte, ne } from "drizzle-orm";
 import { db, schema } from "../db/client.js";
 import { evaluateGeofence, formatDistance } from "../lib/geo.js";
-import { monthRange, todayIn } from "../lib/dates.js";
-import { badRequest, conflict, ApiError } from "../lib/errors.js";
-import { isoDate, monthQuery, optionalText } from "../lib/validators.js";
+import { monthRange, todayIn, zonedDateTime } from "../lib/dates.js";
+import { badRequest, conflict, notFound, ApiError } from "../lib/errors.js";
+import { isoDate, monthQuery, optionalText, uuidParam } from "../lib/validators.js";
+import { audit } from "../lib/audit.js";
+import { env } from "../env.js";
 import { getSetting } from "../lib/settings.js";
 import { requireRole } from "../middleware/auth.js";
 import { validate } from "../middleware/validate.js";
@@ -176,3 +178,35 @@ adminAttendanceRoutes.get("/", validate("query", z.object({ date: isoDate.option
   summary.absent = summary.total - summary.present - summary.onLeave;
   return c.json({ date, summary, rows });
 });
+
+// Fill in a check-out the employee forgot, for a past day. Today stays theirs to punch.
+adminAttendanceRoutes.post(
+  "/:id/check-out",
+  validate("param", uuidParam),
+  validate("json", z.object({ time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Enter a time like 18:30") })),
+  async (c) => {
+    const { id } = c.req.valid("param");
+    const { time } = c.req.valid("json");
+    const [record] = await db.select().from(attendance).where(eq(attendance.id, id));
+    if (!record) throw notFound("Attendance record");
+    if (record.checkOutAt) throw conflict("This day already has a check-out");
+    if (record.date >= todayIn()) throw badRequest("The employee can still check out themselves today");
+
+    const checkOutAt = zonedDateTime(record.date, time);
+    if (checkOutAt <= record.checkInAt) {
+      throw badRequest(`Check-out must be after the ${fmtClock(record.checkInAt)} check-in`, { time: "Must be after check-in" });
+    }
+
+    const [updated] = await db
+      .update(attendance)
+      .set({ checkOutAt })
+      .where(and(eq(attendance.id, id), isNull(attendance.checkOutAt)))
+      .returning();
+    if (!updated) throw conflict("This day already has a check-out");
+    await audit(c.get("user").id, "attendance.check_out_set", "attendance", id, { userId: record.userId, date: record.date, time });
+    return c.json({ record: updated });
+  },
+);
+
+const fmtClock = (ts) =>
+  new Date(ts).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", timeZone: env.APP_TIMEZONE });
