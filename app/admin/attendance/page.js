@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight, Clock3, MapPin, UserCheck, UserX, CalendarOff } from "lucide-react";
 import { load } from "@/lib/api";
 import { addDays, isIsoDate, todayIso } from "@/lib/dates";
-import { fmtDate, fmtDuration, fmtTime } from "@/lib/format";
+import { fmtDate, fmtDistance, fmtDuration, fmtTime } from "@/lib/format";
 import { Avatar, Badge, Card, EmptyState, PageHeader, StatCard, Table, Td, Th } from "@/components/ui";
 import { DateJump } from "@/components/date-jump";
 
@@ -132,11 +132,11 @@ export default async function AttendancePage({ searchParams }) {
                     {r.record &&
                       (r.record.source === "geo" ? (
                         <span className="inline-flex items-center gap-1.5 text-xs text-emerald-300">
-                          <MapPin className="size-3.5" /> In office · {r.record.checkInDistance} m
+                          <MapPin className="size-3.5" /> In office · {fmtDistance(r.record.checkInDistance)}
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1.5 text-xs text-amber-300">
-                          <MapPin className="size-3.5" /> Remote{r.record.checkInDistance != null && ` · ${r.record.checkInDistance} m away`}
+                          <MapPin className="size-3.5" /> Remote{r.record.checkInDistance != null && ` · ${fmtDistance(r.record.checkInDistance)} away`}
                         </span>
                       ))}
                   </Td>

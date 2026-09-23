@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { and, asc, eq, gte, isNull, lte, ne } from "drizzle-orm";
 import { db, schema } from "../db/client.js";
-import { evaluateGeofence } from "../lib/geo.js";
+import { evaluateGeofence, formatDistance } from "../lib/geo.js";
 import { monthRange, todayIn } from "../lib/dates.js";
 import { badRequest, conflict, ApiError } from "../lib/errors.js";
 import { isoDate, monthQuery, optionalText } from "../lib/validators.js";
@@ -50,7 +50,7 @@ async function resolvePosition(input) {
   if (mode === "enforce" && offices.length > 0 && !fence.inside) {
     throw new ApiError(
       403,
-      `You're ${fence.distance} m from ${fence.office.name}. Move within ${fence.office.radiusMeters} m to punch.`,
+      `You're ${formatDistance(fence.distance)} from ${fence.office.name}. Move within ${formatDistance(fence.office.radiusMeters)} to punch.`,
       "outside_geofence",
     );
   }
