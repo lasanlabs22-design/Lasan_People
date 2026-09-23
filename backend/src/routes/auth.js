@@ -8,34 +8,50 @@ import { password } from "../lib/validators.js";
 import { audit } from "../lib/audit.js";
 import { requireAuth } from "../middleware/auth.js";
 import { validate } from "../middleware/validate.js";
-import { rateLimit, clientIp } from "../middleware/rate-limit.js";
+import { createLimiter, clientIp } from "../middleware/rate-limit.js";
 
 const { users, profiles } = schema;
 export const authRoutes = new Hono();
 
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60_000,
-  max: 10,
-  key: async (c) => {
-    const body = await c.req.raw.clone().json().catch(() => ({}));
-    return `${String(body.identifier ?? "").toLowerCase()}|${clientIp(c)}`;
-  },
-});
+// Failed sign-ins only. Keyed by account (not the typed text), so the ID and the
+// email share one budget. The per-account cap is loose enough that someone else
+// can't easily lock a person out, but still bounds guessing from many IPs.
+const WINDOW = 15 * 60_000;
+const perAccountIp = createLimiter({ windowMs: WINDOW, max: 10 });
+const perAccount = createLimiter({ windowMs: WINDOW, max: 50 });
+const perIp = createLimiter({ windowMs: WINDOW, max: 100 });
 
 authRoutes.post(
   "/login",
-  loginLimiter,
   validate("json", z.object({ identifier: z.string().trim().min(1, "Required"), password: z.string().min(1, "Required") })),
   async (c) => {
     const { identifier, password: plain } = c.req.valid("json");
     const id = identifier.toLowerCase();
+    const ip = clientIp(c);
     const [user] = await db
       .select()
       .from(users)
       .where(or(eq(sql`lower(${users.email})`, id), eq(sql`lower(${users.employeeCode})`, id)));
 
+    const account = user?.id ?? `unknown:${id}`;
+    const keys = [
+      [perAccountIp, `${account}|${ip}`],
+      [perAccount, account],
+      [perIp, ip],
+    ];
+    try {
+      for (const [limiter, key] of keys) limiter.check(key);
+    } catch (err) {
+      if (err.retryAfter) c.header("Retry-After", String(err.retryAfter));
+      throw err;
+    }
+
     // Same message for unknown user and wrong password so accounts can't be enumerated.
-    if (!user || !(await verifyPassword(plain, user.passwordHash))) throw unauthorized("Invalid ID or password");
+    if (!user || !(await verifyPassword(plain, user.passwordHash))) {
+      for (const [limiter, key] of keys) limiter.hit(key);
+      throw unauthorized("Invalid ID or password");
+    }
+    perAccountIp.reset(`${account}|${ip}`);
     if (user.status !== "active") throw forbidden("Your access has been revoked. Contact your administrator.");
 
     const [updated] = await db.update(users).set({ lastLoginAt: new Date() }).where(eq(users.id, user.id)).returning();
