@@ -8,6 +8,13 @@ export function distanceMeters(lat1, lng1, lat2, lng2) {
   return 2 * EARTH_RADIUS_M * Math.asin(Math.sqrt(a));
 }
 
+// 850 m, 1.2 km, 1,682 km. Mirrors fmtDistance in lib/format.js.
+export function formatDistance(m) {
+  if (m < 1000) return `${Math.round(m)} m`;
+  const km = m / 1000;
+  return `${km < 10 ? km.toFixed(1) : Math.round(km).toLocaleString("en-IN")} km`;
+}
+
 // GPS accuracy is forgiven up to this many metres; beyond that a fix is too vague to trust.
 const MAX_ACCURACY_ALLOWANCE_M = 50;
 

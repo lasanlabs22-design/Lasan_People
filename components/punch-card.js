@@ -4,7 +4,7 @@ import { useState, useSyncExternalStore, useTransition } from "react";
 import { CheckCircle2, Fingerprint, Loader2, LogIn, LogOut, MapPin, Navigation, ShieldAlert } from "lucide-react";
 import { punch } from "@/app/actions/employee";
 import { getPosition, nearestOffice } from "@/lib/geo";
-import { fmtDate, fmtDuration, fmtTime, TZ } from "@/lib/format";
+import { fmtDate, fmtDistance, fmtDuration, fmtTime, TZ } from "@/lib/format";
 import { Card, cn } from "./ui";
 
 // One-second ticking clock; null during SSR so server and client markup match.
@@ -155,7 +155,7 @@ function GeoStatus({ mode, offices, near, inside }) {
         inside ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300" : "border-amber-500/30 bg-amber-500/10 text-amber-300",
       )}
     >
-      <MapPin className="size-3" /> {inside ? `At ${near.office.name}` : `${near.distance} m from ${near.office.name}`}
+      <MapPin className="size-3" /> {inside ? `At ${near.office.name}` : `${fmtDistance(near.distance)} from ${near.office.name}`}
     </span>
   );
 }
