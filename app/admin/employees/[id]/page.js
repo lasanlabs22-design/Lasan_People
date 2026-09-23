@@ -10,7 +10,7 @@ import { Avatar, Badge, Card, CardHeader, EmptyState, Stars, cn } from "@/compon
 import { ActionButton } from "@/components/client";
 import { BalanceCard } from "@/components/balance-card";
 import { Legend, MonthCalendar, MonthNav, YearCalendar } from "@/components/calendar";
-import { AccessActions, AllocationEditor, RatingForm } from "./client";
+import { AccessActions, AllocationEditor, RatingForm, RecordLeave } from "./client";
 
 export const metadata = { title: "Employee" };
 
@@ -162,7 +162,12 @@ async function LeavesTab({ id, employee, balances, year, base }) {
       </Card>
 
       <Card>
-        <CardHeader title="Requests" subtitle={`${leaves.length} in ${year}`} icon={CalendarRange} />
+        <CardHeader
+          title="Requests"
+          subtitle={`${leaves.length} in ${year}`}
+          icon={CalendarRange}
+          action={<RecordLeave employeeId={id} employeeName={employee.name} balances={balances} disabled={employee.status !== "active"} />}
+        />
         <div className="mt-3 divide-y divide-white/[0.05]">
           {leaves.length === 0 && <EmptyState title="No leave requests this year" />}
           {leaves.map((l) => (

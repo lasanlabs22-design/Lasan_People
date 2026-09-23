@@ -99,6 +99,28 @@ export async function rejectLeave(id, _prev, fd) {
   return run(() => api(`/admin/leaves/${id}/reject`, { method: "POST", body: { reason: str(fd, "reason") } }), "/admin/leaves");
 }
 
+// Leave recorded on an employee's behalf (any date, approved straight away).
+export async function recordLeave(userId, _prev, fd) {
+  const body = {
+    userId,
+    leaveTypeId: str(fd, "leaveTypeId"),
+    startDate: str(fd, "startDate"),
+    endDate: str(fd, "endDate") || str(fd, "startDate"),
+    halfDay: str(fd, "halfDay") || "none",
+    reason: str(fd, "reason"),
+  };
+  return run(() => api("/admin/leaves/record", { method: "POST", body }), `/admin/employees/${userId}`);
+}
+
+/** Dry run for the record-leave form. Never throws. */
+export async function previewRecordedLeave(userId, body) {
+  try {
+    return { ok: true, ...(await api("/admin/leaves/record/preview", { method: "POST", body: { reason: "preview", ...body, userId } })) };
+  } catch (err) {
+    return actionError(err);
+  }
+}
+
 /* ------------------------------ Attendance ------------------------------ */
 
 export async function setCheckOut(recordId, _prev, fd) {
