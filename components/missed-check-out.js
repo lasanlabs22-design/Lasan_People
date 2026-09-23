@@ -16,7 +16,7 @@ export function MissedCheckOut({ record, editable }) {
     return res;
   });
 
-  if (!editable) return <Badge tone="amber">Missed check-out</Badge>;
+  if (!editable) return <Badge tone="amber" className="normal-case!">Missed check-out</Badge>;
 
   return (
     <>
@@ -26,7 +26,7 @@ export function MissedCheckOut({ record, editable }) {
         className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
         title="Set the check-out time"
       >
-        <Badge tone="amber" className="cursor-pointer hover:brightness-125">
+        <Badge tone="amber" className="cursor-pointer normal-case! hover:brightness-125">
           Missed check-out · set
         </Badge>
       </button>
