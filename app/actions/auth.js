@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { api, actionError, ApiError } from "@/lib/api";
 import { setSession, homeFor } from "@/lib/session";
@@ -11,9 +12,11 @@ const safeNext = (next, role) =>
 export async function login(_prev, formData) {
   const identifier = String(formData.get("identifier") ?? "").trim();
   const password = String(formData.get("password") ?? "");
+  const h = await headers();
+  const clientIp = h.get("x-forwarded-for")?.split(",")[0].trim() || h.get("x-real-ip") || undefined;
   let res;
   try {
-    res = await api("/auth/login", { method: "POST", body: { identifier, password }, token: null });
+    res = await api("/auth/login", { method: "POST", body: { identifier, password }, token: null, clientIp });
   } catch (err) {
     // A 401 here means bad credentials, not an expired session, so don't use actionError's redirect.
     if (err instanceof ApiError) return { ok: false, error: err.message, fields: err.fields };
