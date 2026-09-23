@@ -52,7 +52,30 @@ export default async function EmployeesPage({ searchParams }) {
         {employees.length === 0 ? (
           <EmptyState icon={Users} title={q ? "No matches" : "No employees yet"} description={q ? "Try a different search." : "Add your first teammate to get started."} />
         ) : (
-          <Table>
+          <>
+          {/* Phones: one card per person so the status isn't pushed off-screen. */}
+          <ul className="divide-y divide-white/[0.05] sm:hidden">
+            {employees.map((e) => (
+              <li key={e.id}>
+                <Link href={`/admin/employees/${e.id}`} className="flex items-center gap-3 px-4 py-3.5 active:bg-white/[0.03]">
+                  <Avatar src={e.avatar} name={e.name} size={38} />
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-1.5">
+                      <span className="truncate text-sm font-medium">{e.name}</span>
+                      {e.role === "admin" && <Badge tone="brand">Admin</Badge>}
+                    </span>
+                    <span className="block truncate text-xs text-muted">
+                      <span className="font-mono">{e.employeeCode}</span> · {e.designation || e.email}
+                    </span>
+                  </span>
+                  <Badge tone={STATUS_TONE[e.status]} dot>
+                    {e.status}
+                  </Badge>
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <Table className="hidden sm:block">
             <thead className="border-b border-white/[0.06]">
               <tr>
                 <Th>Employee</Th>
@@ -110,6 +133,7 @@ export default async function EmployeesPage({ searchParams }) {
               ))}
             </tbody>
           </Table>
+          </>
         )}
       </Card>
     </>
