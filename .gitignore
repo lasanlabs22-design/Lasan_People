@@ -34,6 +34,10 @@ yarn-error.log*
 .env*
 !.env.example
 
+# local MCP config (holds the Playwright extension token)
+.mcp.json
+.playwright-mcp/
+
 # vercel
 .vercel
 
