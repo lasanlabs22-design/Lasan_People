@@ -234,7 +234,14 @@ function OfficeForm({ office, onDone }) {
           {office.id ? "Save office" : "Add office"}
         </SubmitButton>
         {office.id && (
-          <ActionButton variant="danger" action={deleteOffice.bind(null, office.id)} confirmText={`Delete ${office.name}?`} onDone={onDone}>
+          <ActionButton
+            variant="danger"
+            action={deleteOffice.bind(null, office.id)}
+            confirmText={`Delete ${office.name}?`}
+            onDone={onDone}
+            aria-label={`Delete ${office.name}`}
+            title="Delete office"
+          >
             <Trash2 className="size-4" />
           </ActionButton>
         )}

@@ -107,7 +107,14 @@ function HolidayForm({ date, holiday, onDone }) {
           {holiday ? "Save changes" : "Add holiday"}
         </SubmitButton>
         {holiday && (
-          <ActionButton variant="danger" action={deleteHoliday.bind(null, holiday.id)} confirmText={`Delete ${holiday.name}?`} onDone={onDone}>
+          <ActionButton
+            variant="danger"
+            action={deleteHoliday.bind(null, holiday.id)}
+            confirmText={`Delete ${holiday.name}?`}
+            onDone={onDone}
+            aria-label={`Delete ${holiday.name}`}
+            title="Delete holiday"
+          >
             <Trash2 className="size-4" />
           </ActionButton>
         )}
