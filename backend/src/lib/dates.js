@@ -10,6 +10,18 @@ export function todayIn(timeZone = env.APP_TIMEZONE, now = new Date()) {
   return new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
 }
 
+/** Wall-clock date ("YYYY-MM-DD") and time ("HH:MM") in `timeZone` → the matching instant. */
+export function zonedDateTime(date, time, timeZone = env.APP_TIMEZONE) {
+  const guess = Date.UTC(+date.slice(0, 4), +date.slice(5, 7) - 1, +date.slice(8, 10), +time.slice(0, 2), +time.slice(3, 5));
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-US", { timeZone, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })
+      .formatToParts(guess)
+      .map((p) => [p.type, p.value]),
+  );
+  const shown = Date.UTC(+parts.year, +parts.month - 1, +parts.day, +parts.hour, +parts.minute);
+  return new Date(guess - (shown - guess));
+}
+
 export function* eachDate(start, end) {
   for (let t = toUtc(start); t <= toUtc(end); t += DAY_MS) yield fromUtc(t);
 }

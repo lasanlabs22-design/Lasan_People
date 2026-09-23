@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Clock3, MapPin, UserCheck, UserX, CalendarOff } from "lucide-react";
 import { load } from "@/lib/api";
-import { addDays, isIsoDate, todayIso } from "@/lib/dates";
+import { addDays, isIsoDate, missedCheckOut, todayIso } from "@/lib/dates";
 import { fmtDate, fmtDistance, fmtDuration, fmtTime } from "@/lib/format";
 import { Avatar, Badge, Card, EmptyState, PageHeader, StatCard, Table, Td, Th } from "@/components/ui";
 import { DateJump } from "@/components/date-jump";
+import { MissedCheckOut } from "@/components/missed-check-out";
 
 export const metadata = { title: "Attendance" };
 
@@ -54,8 +55,8 @@ export default async function AttendancePage({ searchParams }) {
           {/* Phones: one card per person instead of a 6-column table. */}
           <ul className="divide-y divide-white/[0.05] sm:hidden">
             {rows.map((r) => (
-              <li key={r.id}>
-                <Link href={`/admin/employees/${r.id}?tab=attendance`} className="flex items-center gap-3 px-4 py-3.5 active:bg-white/[0.03]">
+              <li key={r.id} className="flex items-center gap-3 px-4 py-3.5 active:bg-white/[0.03]">
+                <Link href={`/admin/employees/${r.id}?tab=attendance`} className="flex min-w-0 flex-1 items-center gap-3">
                   <Avatar name={r.name} size={36} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{r.name}</p>
@@ -74,18 +75,20 @@ export default async function AttendancePage({ searchParams }) {
                       )}
                     </p>
                   </div>
-                  {r.record ? (
-                    <Badge tone="emerald" dot>
-                      {r.record.checkOutAt ? fmtDuration(r.record.checkInAt, r.record.checkOutAt) : "In"}
-                    </Badge>
-                  ) : r.leave ? (
-                    <span className="rounded-full px-2.5 py-0.5 text-[11px] font-medium" style={{ background: `${r.leave.color}22`, color: r.leave.color }}>
-                      {r.leave.type}
-                    </span>
-                  ) : (
-                    <Badge tone="slate">Not in</Badge>
-                  )}
                 </Link>
+                {missedCheckOut(r.record, today) ? (
+                  <MissedCheckOut record={r.record} editable />
+                ) : r.record ? (
+                  <Badge tone="emerald" dot>
+                    {r.record.checkOutAt ? fmtDuration(r.record.checkInAt, r.record.checkOutAt) : "In"}
+                  </Badge>
+                ) : r.leave ? (
+                  <span className="rounded-full px-2.5 py-0.5 text-[11px] font-medium" style={{ background: `${r.leave.color}22`, color: r.leave.color }}>
+                    {r.leave.type}
+                  </span>
+                ) : (
+                  <Badge tone="slate">Not in</Badge>
+                )}
               </li>
             ))}
           </ul>
@@ -126,7 +129,9 @@ export default async function AttendancePage({ searchParams }) {
                     )}
                   </Td>
                   <Td className="tabular-nums">{fmtTime(r.record?.checkInAt)}</Td>
-                  <Td className="tabular-nums">{fmtTime(r.record?.checkOutAt)}</Td>
+                  <Td className="tabular-nums">
+                    {missedCheckOut(r.record, today) ? <MissedCheckOut record={r.record} editable /> : fmtTime(r.record?.checkOutAt)}
+                  </Td>
                   <Td className="hidden tabular-nums text-muted sm:table-cell">{fmtDuration(r.record?.checkInAt, r.record?.checkOutAt)}</Td>
                   <Td className="hidden md:table-cell">
                     {r.record &&
