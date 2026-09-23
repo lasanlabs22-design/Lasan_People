@@ -77,37 +77,20 @@ async function validateRequest(user, input) {
   return { type, days, balance };
 }
 
-export const leaveRoutes = new Hono();
+// Leave that has already been taken is recorded by an admin, on request — employees only book ahead.
+function assertNotPast(input) {
+  if (input.startDate < todayIn()) {
+    throw badRequest("You can't apply for past dates. Ask your admin to record leave you've already taken.", {
+      startDate: "Can't be in the past",
+    });
+  }
+}
 
-leaveRoutes.get("/balances", validate("query", z.object({ year: yearQuery.optional() })), async (c) => {
-  const year = c.req.valid("query").year ?? Number(todayIn().slice(0, 4));
-  return c.json({ year, balances: await leaveBalances(c.get("user"), year) });
-});
-
-// Dry-run so the UI can show "this will use N days" before submitting.
-leaveRoutes.post("/preview", validate("json", applySchema), async (c) => {
-  const { days, balance } = await validateRequest(c.get("user"), c.req.valid("json"));
-  return c.json({ days, available: balance?.available ?? 0, sufficient: days <= (balance?.available ?? 0) });
-});
-
-leaveRoutes.get("/mine", validate("query", z.object({ year: yearQuery.optional() })), async (c) => {
-  const user = c.get("user");
-  const year = c.req.valid("query").year ?? Number(todayIn().slice(0, 4));
-  const { start, end } = yearRange(year);
-  const leaves = await leaveQuery()
-    .where(and(eq(leaveRequests.userId, user.id), gte(leaveRequests.startDate, start), lte(leaveRequests.startDate, end)))
-    .orderBy(desc(leaveRequests.startDate));
-  return c.json({ year, leaves });
-});
-
-leaveRoutes.post("/", validate("json", applySchema), async (c) => {
-  const user = c.get("user");
-  const input = c.req.valid("json");
-  const { type, days, balance } = await validateRequest(user, input);
-
+/** Balance + overlap checks, then insert. Shared by employee requests and admin-recorded leave. */
+async function createLeave(user, input, { type, days, balance }, extra = {}) {
   if (!balance || days > balance.available) {
     throw badRequest(`Not enough ${type.name} left: ${balance?.available ?? 0} available, ${days} requested`, {
-      endDate: "Exceeds your balance",
+      endDate: "Exceeds the balance",
     });
   }
 
@@ -123,13 +106,48 @@ leaveRoutes.post("/", validate("json", applySchema), async (c) => {
       ),
     )
     .limit(1);
-  if (overlapping.length) throw conflict("You already have a leave request covering some of these dates");
+  if (overlapping.length) throw conflict("There is already a leave request covering some of these dates");
 
   const [leave] = await db
     .insert(leaveRequests)
-    .values({ ...input, userId: user.id, days })
+    .values({ leaveTypeId: input.leaveTypeId, startDate: input.startDate, endDate: input.endDate, halfDay: input.halfDay, reason: input.reason, userId: user.id, days, ...extra })
     .returning();
-  await audit(user.id, "leave.requested", "leave_request", leave.id, { days, type: type.code });
+  return leave;
+}
+
+export const leaveRoutes = new Hono();
+
+leaveRoutes.get("/balances", validate("query", z.object({ year: yearQuery.optional() })), async (c) => {
+  const year = c.req.valid("query").year ?? Number(todayIn().slice(0, 4));
+  return c.json({ year, balances: await leaveBalances(c.get("user"), year) });
+});
+
+// Dry-run so the UI can show "this will use N days" before submitting.
+const previewJson = ({ days, balance }) => ({ days, available: balance?.available ?? 0, sufficient: days <= (balance?.available ?? 0) });
+
+leaveRoutes.post("/preview", validate("json", applySchema), async (c) => {
+  const input = c.req.valid("json");
+  assertNotPast(input);
+  return c.json(previewJson(await validateRequest(c.get("user"), input)));
+});
+
+leaveRoutes.get("/mine", validate("query", z.object({ year: yearQuery.optional() })), async (c) => {
+  const user = c.get("user");
+  const year = c.req.valid("query").year ?? Number(todayIn().slice(0, 4));
+  const { start, end } = yearRange(year);
+  const leaves = await leaveQuery()
+    .where(and(eq(leaveRequests.userId, user.id), gte(leaveRequests.startDate, start), lte(leaveRequests.startDate, end)))
+    .orderBy(desc(leaveRequests.startDate));
+  return c.json({ year, leaves });
+});
+
+leaveRoutes.post("/", validate("json", applySchema), async (c) => {
+  const user = c.get("user");
+  const input = c.req.valid("json");
+  assertNotPast(input);
+  const checked = await validateRequest(user, input);
+  const leave = await createLeave(user, input, checked);
+  await audit(user.id, "leave.requested", "leave_request", leave.id, { days: checked.days, type: checked.type.code });
   return c.json({ leave }, 201);
 });
 
@@ -178,6 +196,36 @@ adminLeaveRoutes.get(
     return c.json({ leaves });
   },
 );
+
+const recordSchema = applySchema.and(z.object({ userId: z.uuid("Unknown employee") }));
+
+async function employeeFor(userId) {
+  const [employee] = await db.select().from(users).where(eq(users.id, userId));
+  if (!employee) throw notFound("Employee");
+  if (employee.status !== "active") throw badRequest("This employee's access is revoked");
+  return employee;
+}
+
+adminLeaveRoutes.post("/record/preview", validate("json", recordSchema), async (c) => {
+  const input = c.req.valid("json");
+  return c.json(previewJson(await validateRequest(await employeeFor(input.userId), input)));
+});
+
+// Record leave on an employee's behalf — e.g. sick days they ask to log afterwards. Any date, approved on creation.
+adminLeaveRoutes.post("/record", validate("json", recordSchema), async (c) => {
+  const admin = c.get("user");
+  const input = c.req.valid("json");
+  const employee = await employeeFor(input.userId);
+  const checked = await validateRequest(employee, input);
+  const leave = await createLeave(employee, input, checked, {
+    status: "approved",
+    reviewerId: admin.id,
+    reviewComment: "Recorded by admin",
+    reviewedAt: new Date(),
+  });
+  await audit(admin.id, "leave.recorded", "leave_request", leave.id, { userId: employee.id, days: checked.days, type: checked.type.code });
+  return c.json({ leave }, 201);
+});
 
 async function review(c, status, comment) {
   const admin = c.get("user");

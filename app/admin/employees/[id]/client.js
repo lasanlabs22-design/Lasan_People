@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { KeyRound, Pencil, ShieldOff, ShieldCheck, SlidersHorizontal } from "lucide-react";
+import { useMemo, useState } from "react";
+import { CalendarPlus, KeyRound, Pencil, ShieldOff, ShieldCheck, SlidersHorizontal } from "lucide-react";
 import {
+  previewRecordedLeave,
   rateEmployee,
+  recordLeave,
   reinstateEmployee,
   resetEmployeePassword,
   revokeEmployee,
@@ -12,6 +14,7 @@ import {
 } from "@/app/actions/admin";
 import { ActionButton, Modal, SubmitButton, useFormAction } from "@/components/client";
 import { CredentialsCard } from "@/components/credentials";
+import { LeaveForm } from "@/components/leave-form";
 import { Alert, Button, Field, Input, Textarea, cn } from "@/components/ui";
 import { EmployeeFields } from "../add-employee";
 
@@ -132,6 +135,45 @@ export function RatingForm({ employeeId }) {
         Save rating
       </SubmitButton>
     </form>
+  );
+}
+
+/** Log leave for an employee who asks — including days already taken. Saved as approved. */
+export function RecordLeave({ employeeId, employeeName, balances, disabled }) {
+  const [open, setOpen] = useState(false);
+  const [key, setKey] = useState(0);
+  const submit = useMemo(() => recordLeave.bind(null, employeeId), [employeeId]);
+  const preview = useMemo(() => previewRecordedLeave.bind(null, employeeId), [employeeId]);
+  return (
+    <>
+      <Button
+        variant="secondary"
+        size="sm"
+        disabled={disabled}
+        onClick={() => {
+          setKey((k) => k + 1);
+          setOpen(true);
+        }}
+      >
+        <CalendarPlus className="size-3.5" /> Record leave
+      </Button>
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title={`Record leave for ${employeeName}`}
+        description="For leave the employee asked you to log, including past days. It's saved as approved and deducted from their balance."
+      >
+        <LeaveForm
+          key={key}
+          balances={balances}
+          onDone={() => setOpen(false)}
+          submit={submit}
+          preview={preview}
+          submitLabel="Record approved leave"
+          reasonPlaceholder="e.g. Sick on Monday, told us by phone"
+        />
+      </Modal>
+    </>
   );
 }
 
