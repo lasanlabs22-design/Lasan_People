@@ -1,4 +1,4 @@
-import { Link } from "@/components/navigation";
+import { ConsumeSearchParam, Link } from "@/components/navigation";
 import { ArrowUpRight, CalendarDays, CalendarPlus, History, PartyPopper } from "lucide-react";
 import { load } from "@/lib/api";
 import { fmtDate, fmtDays, fmtRange, greeting, STATUS_TONE } from "@/lib/format";
@@ -33,6 +33,7 @@ export default async function EmployeeDashboard({ searchParams }) {
         }
       />
 
+      {welcome && <ConsumeSearchParam name="welcome" />}
       {welcome && (
         <Alert tone="brand" className="mb-6 flex items-center gap-2">
           <PartyPopper className="size-4" /> You&apos;re all set! Take a minute to{" "}
