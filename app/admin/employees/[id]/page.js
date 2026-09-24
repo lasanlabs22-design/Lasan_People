@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/components/navigation";
 import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarRange, Clock3, HeartPulse, Mail, Phone, Star, UserRound } from "lucide-react";
 import { load, ApiError } from "@/lib/api";
@@ -39,7 +39,7 @@ export default async function EmployeeDetail({ params, searchParams }) {
 
   return (
     <>
-      <Link href="/admin/employees" className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted hover:text-fg">
+      <Link data-page-header href="/admin/employees" className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted hover:text-fg">
         <ArrowLeft className="size-4" /> All employees
       </Link>
 

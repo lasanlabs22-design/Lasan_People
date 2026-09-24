@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/components/navigation";
 import { Inbox } from "lucide-react";
 import { load } from "@/lib/api";
 import { fmtDate, fmtDays, fmtRange, HALF_DAY_LABEL, STATUS_TONE } from "@/lib/format";

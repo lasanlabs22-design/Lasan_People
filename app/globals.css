@@ -32,7 +32,16 @@
   --animate-fade-up: fade-up 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   --animate-pulse-ring: pulse-ring 2.2s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
   --animate-float: float 14s ease-in-out infinite;
+  --animate-progress: progress 1.1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 
+  @keyframes progress {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(300%);
+    }
+  }
   @keyframes fade-up {
     from {
       opacity: 0;
@@ -158,6 +167,42 @@ body {
   input[type="date"].field::-webkit-calendar-picker-indicator {
     filter: invert(0.7);
     cursor: pointer;
+  }
+}
+
+/* Every screen eases in as it replaces the previous one (or its loading skeleton). The page
+   header is left still, so a title the skeleton already showed doesn't blink when data lands. */
+main > :not([data-page-header], [data-skeleton]) {
+  animation: var(--animate-fade-up);
+}
+
+/* Loading skeletons stay invisible for a beat, so fast navigations never flash one. */
+[data-skeleton] {
+  animation: fade-in 0.3s ease-out 0.15s both;
+}
+.bone {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  background: rgb(255 255 255 / 0.05);
+}
+.bone::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.06), transparent);
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes shimmer {
+  to {
+    transform: translateX(100%);
   }
 }
 

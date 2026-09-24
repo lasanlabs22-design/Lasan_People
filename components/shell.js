@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   CalendarDays,
@@ -17,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { Logo } from "./brand";
+import { Link, NavigationProgress, NavigationTracker, useNavigationPending } from "./navigation";
 import { PoweredBy } from "./powered-by";
 import { Avatar, cn } from "./ui";
 
@@ -42,6 +42,7 @@ export function Shell({ user, badges = {}, children }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const items = NAV[user.role] ?? NAV.employee;
+  const [navigating, trackNavigation] = useNavigationPending();
 
   // Close the mobile drawer whenever navigation happens.
   const [lastPath, setLastPath] = useState(pathname);
@@ -98,43 +99,55 @@ export function Shell({ user, badges = {}, children }) {
   );
 
   return (
-    <div className="flex min-h-dvh flex-col lg:pl-64">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-white/[0.06] bg-ink-950/60 p-4 backdrop-blur-xl lg:flex">
-        <Link href={items[0].href} className="mb-8 px-2 pt-2">
+    <NavigationTracker track={trackNavigation}>
+      <NavigationProgress active={navigating} />
+      <div className="flex min-h-dvh flex-col lg:pl-64">
+        <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-white/[0.06] bg-ink-950/60 p-4 backdrop-blur-xl lg:flex">
+          <Link href={items[0].href} className="mb-8 px-2 pt-2">
+            <Logo />
+          </Link>
+          {nav}
+          {account}
+        </aside>
+
+        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-white/[0.06] bg-ink-950/70 px-4 py-3 backdrop-blur-xl lg:hidden">
           <Logo />
-        </Link>
-        {nav}
-        {account}
-      </aside>
+          <button onClick={() => setOpen(true)} className="rounded-lg p-2 text-muted hover:bg-white/10" aria-label="Open menu">
+            <Menu className="size-5" />
+          </button>
+        </header>
 
-      <header className="sticky top-0 z-20 flex items-center justify-between border-b border-white/[0.06] bg-ink-950/70 px-4 py-3 backdrop-blur-xl lg:hidden">
-        <Logo />
-        <button onClick={() => setOpen(true)} className="rounded-lg p-2 text-muted hover:bg-white/10" aria-label="Open menu">
-          <Menu className="size-5" />
-        </button>
-      </header>
+        {open && (
+          <div className="fixed inset-0 z-40 lg:hidden">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setOpen(false)} />
+            <aside className="absolute inset-y-0 left-0 flex w-72 flex-col border-r border-white/10 bg-ink-900 p-4 animate-fade-up">
+              <div className="mb-8 flex items-center justify-between px-2 pt-2">
+                <Logo />
+                <button onClick={() => setOpen(false)} className="rounded-lg p-1.5 text-muted hover:bg-white/10" aria-label="Close menu">
+                  <X className="size-5" />
+                </button>
+              </div>
+              {nav}
+              {account}
+            </aside>
+          </div>
+        )}
 
-      {open && (
-        <div className="fixed inset-0 z-40 lg:hidden">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setOpen(false)} />
-          <aside className="absolute inset-y-0 left-0 flex w-72 flex-col border-r border-white/10 bg-ink-900 p-4 animate-fade-up">
-            <div className="mb-8 flex items-center justify-between px-2 pt-2">
-              <Logo />
-              <button onClick={() => setOpen(false)} className="rounded-lg p-1.5 text-muted hover:bg-white/10" aria-label="Close menu">
-                <X className="size-5" />
-              </button>
-            </div>
-            {nav}
-            {account}
-          </aside>
-        </div>
-      )}
+        {/* While the next screen loads, the current one fades back instead of freezing silently. */}
+        <main
+          aria-busy={navigating || undefined}
+          className={cn(
+            "mx-auto w-full max-w-7xl flex-1 px-4 pt-6 pb-4 transition-opacity duration-200 sm:px-6 sm:pt-8 lg:px-10 lg:pt-10",
+            navigating && "opacity-60 delay-150",
+          )}
+        >
+          {children}
+        </main>
+        <PoweredBy className={cn(user.role !== "admin" && "pb-24 lg:pb-6")} />
 
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 pt-6 pb-4 sm:px-6 sm:pt-8 lg:px-10 lg:pt-10">{children}</main>
-      <PoweredBy className={cn(user.role !== "admin" && "pb-24 lg:pb-6")} />
-
-      {user.role !== "admin" && <BottomNav items={items} pathname={pathname} />}
-    </div>
+        {user.role !== "admin" && <BottomNav items={items} pathname={pathname} />}
+      </div>
+    </NavigationTracker>
   );
 }
 

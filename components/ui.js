@@ -1,5 +1,5 @@
 // Presentational primitives: no hooks, safe in both server and client components.
-import Link from "next/link";
+import { Link } from "./navigation";
 import { initials } from "@/lib/format";
 
 export const cn = (...c) => c.filter(Boolean).join(" ");
@@ -128,7 +128,7 @@ function StarSvg({ size, className }) {
 
 export function PageHeader({ eyebrow, title, description, actions }) {
   return (
-    <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between animate-fade-up">
+    <div data-page-header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
         {eyebrow && <p className="mb-1.5 text-xs font-medium uppercase tracking-[0.18em] text-brand-300/80">{eyebrow}</p>}
         <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">{title}</h1>
